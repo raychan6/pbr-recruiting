@@ -1,0 +1,466 @@
+---
+title: "pbr_recruiting"
+author: "Raymond Lee"
+date: "2023-03-02"
+output: pdf_document
+---
+
+```{r message=FALSE}
+library(tidyverse)
+library(dplyr)
+library(stringr)
+library(janitor)
+library(ggplot2)
+library(forcats)
+library(gt)
+library(readxl)
+library(maps)
+library(cowplot)
+library(ggrepel)
+```
+
+```{r}
+pbr22 = read_excel('pbr22.xlsx')
+pbr22$class = rep(2022)
+colnames(pbr22)[3] = 'hs'
+pbr22 = clean_names(pbr22)
+pbr22 = pbr22[-1]
+
+pg22_100 = read.csv('pg22_100.csv')
+pg22_100 = pg22_100[c(10, 11)]
+
+pbr22 = left_join(pbr22, pg22_100, by='hs')
+pbr22 = pbr22[!duplicated(pbr22),]
+
+pbr22$hs_county[pbr22$hs == 'C.K. McClatchy'] = 'Sacramento'
+pbr22$hs_county[pbr22$hs == 'JSerra'] = 'Orange'
+pbr22$hs_county[pbr22$hs == 'Sacred Heart Cathedral'] = 'San Francisco'
+pbr22$hs_county[pbr22$hs == 'Half Moon Bay'] = 'San Mateo'
+pbr22$hs_county[pbr22$hs == 'College Park'] = 'Contra Costa'
+pbr22$hs_county[pbr22$hs == "Bishop O'Dowd"] = 'Alameda'
+pbr22$hs_county[pbr22$hs == "Clayton Valley Charter"] = 'Contra Costa'
+pbr22$hs_county[pbr22$hs == "Ayala"] = 'San Bernardino'
+pbr22$hs_county[pbr22$hs == "Manteca"] = 'San Joaquin'
+pbr22$hs_county[pbr22$hs == "Tulare Western"] = 'Tulare'
+pbr22$hs_county[pbr22$hs == "Mission Vista"] = 'San Diego'
+pbr22$hs_county[pbr22$hs == "King"] = 'Riverside'
+pbr22$hs_county[pbr22$hs == "Etiwanda"] = 'San Bernardino'
+pbr22$hs_county[pbr22$hs == "Santa Fe Christian"] = 'San Diego'
+pbr22$hs_county[pbr22$hs == "Torrey Pines"] = 'San Diego'
+pbr22$hs_county[pbr22$hs == "Madera South"] = 'Madera'
+pbr22$hs_county[pbr22$hs == "Madison"] = 'San Diego'
+pbr22$hs_county[pbr22$hs == "Gahr"] = 'Los Angeles'
+pbr22$hs_county[pbr22$hs == "St. Mary's"] = 'San Joaquin'
+pbr22$hs_county[pbr22$hs == "Bishops"] = 'San Diego'
+pbr22$hs_county[pbr22$hs == "Wilson"] = 'Los Angeles'
+pbr22$hs_county[pbr22$hs == "Redondo Union"] = 'Los Angeles'
+pbr22$hs_county[pbr22$hs == "Tokay"] = 'San Joaquin'
+pbr22$hs_county[pbr22$hs == "Corona del Mar"] = 'Orange'
+pbr22$hs_county[pbr22$hs == "La Jolla Country Day"] = 'San Diego'
+pbr22$hs_county[pbr22$hs == "Point Loma"] = 'San Diego'
+pbr22$hs_county[pbr22$hs == "Arlington"] = 'Riverside'
+pbr22$hs_county[pbr22$hs == "Aptos"] = 'Santa Cruz'
+pbr22$hs_county[pbr22$hs == "Glendora"] = 'Santa Cruz'
+pbr22$hs_county[pbr22$hs == "Tracy"] = 'San Joaquin'
+pbr22$hs_county[pbr22$hs == "Citrus Valley"] = 'San Bernardino'
+pbr22$hs_county[pbr22$hs == "Calabasas"] = 'Los Angeles'
+pbr22$hs_county[pbr22$hs == "Alameda"] = 'Alameda'
+pbr22$hs_county[pbr22$hs == "San Joaquin Memorial"] = 'Fresno'
+pbr22$hs_county[pbr22$hs == "Dougherty Valley"] = 'Contra Costa'
+pbr22$hs_county[pbr22$hs == "Oakdale"] = 'Stanislaus'
+pbr22$hs_county[pbr22$hs == "Los Osos"] = 'San Bernardino'
+pbr22$hs_county[pbr22$hs == "St. Monica Catholic"] = 'Los Angeles'
+pbr22$hs_county[pbr22$hs == "Alpha Charter"] = 'Sacramento'
+pbr22$hs_county[pbr22$hs == "Paloma Valley"] = 'Riverside'
+pbr22$hs_county[pbr22$hs == "North Torrance"] = 'Los Angeles'
+pbr22$hs_county[pbr22$hs == "St. John Bosco"] = 'Los Angeles'
+pbr22$hs_county[pbr22$hs == "Lincoln"] = 'Placer'
+pbr22$hs_county[pbr22$hs == "South Hills"] = 'Los Angeles'
+pbr22$hs_county[pbr22$hs == "Cathedral Catholic"] = 'San Diego'
+pbr22$hs_county[pbr22$hs == "Steele Canyon"] = 'San Diego'
+pbr22$hs_county[pbr22$hs == "West Ranch"] = 'Los Angeles'
+pbr22$hs_county[pbr22$hs == "Soquel"] = 'Santa Cruz'
+pbr22$hs_county[pbr22$hs == "Torrance"] = 'Los Angeles'
+pbr22$hs_county[pbr22$hs == "Bonita"] = 'Los Angeles'
+pbr22$hs_county[pbr22$hs == "Millikan"] = 'Los Angeles'
+pbr22$hs_county[pbr22$hs == "Patrick Henry"] = 'San Diego'
+pbr22$hs_county[pbr22$hs == "Long Beach Poly"] = 'Los Angeles'
+pbr22$hs_county[pbr22$hs == "Helix"] = 'San Diego'
+pbr22$hs_county[pbr22$hs == "Flintridge Prep"] = 'Los Angeles'
+pbr22$hs_county[pbr22$hs == "Newport Harbor"] = 'Orange'
+pbr22$hs_county[pbr22$hs == "Granite Bay"] = 'Placer'
+pbr22$hs_county[pbr22$hs == "Del Campo"] = 'Sacramento'
+pbr22$hs_county[pbr22$hs == "Bishop Amat"] = 'Los Angeles'
+pbr22$hs_county[pbr22$hs == "Del Oro"] = 'Placer'
+pbr22$hs_county[pbr22$hs == "Redwood"] = 'Marin'
+pbr22$hs_county[pbr22$hs == "Moorpark"] = 'Ventura'
+pbr22$hs_county[pbr22$hs == "Archie Williams"] = 'Marin'
+pbr22$hs_county[pbr22$hs == "Grossmont"] = 'San Diego'
+pbr22$hs_county[pbr22$hs == "Mt Carmel"] = 'San Diego'
+pbr22$hs_county[pbr22$hs == "Clovis North"] = 'Fresno'
+pbr22$hs_county[pbr22$hs == "Truckee"] = 'Nevada'
+pbr22$hs_county[pbr22$hs == "Mira Costa"] = 'Los Angeles'
+pbr22$hs_county[pbr22$hs == "River City"] = 'Yolo'
+pbr22$hs_county[pbr22$hs == "South"] = 'Los Angeles'
+pbr22$hs_county[pbr22$hs == "Villa Park"] = 'Orange'
+pbr22$hs_county[pbr22$hs == "Poway"] = 'San Diego'
+pbr22$hs_county[pbr22$hs == "Del Norte"] = 'San Diego'
+pbr22$hs_county[pbr22$hs == "Saint Francis"] = 'Los Angeles'
+pbr22$hs_county[pbr22$hs == "Otay Ranch"] = 'San Diego'
+pbr22$hs_county[pbr22$hs == "Enochs"] = 'Stanislaus'
+pbr22$hs_county[pbr22$hs == "Harvard Westlake"] = 'Los Angeles'
+pbr22$hs_county[pbr22$hs == "Saint John Bosco"] = 'Los Angeles'
+pbr22$hs_county[pbr22$hs == "St Augustine"] = 'San Diego'
+pbr22$hs_county[pbr22$hs == "La Salle College Prep"] = 'Los Angeles'
+pbr22$hs_county[pbr22$hs == "Bonita Vista"] = 'San Diego'
+pbr22$hs_county[pbr22$hs == "Carlmont"] = 'San Mateo'
+pbr22$hs_county[pbr22$hs == "Eastlake"] = 'San Diego'
+pbr22$hs_county[pbr22$hs == "Palos Verdes"] = 'Los Angeles'
+pbr22$hs_county[pbr22$hs == "Novato"] = 'Marin'
+pbr22$hs_county[pbr22$hs == "Sir Francis Drake"] = 'Marin'
+pbr22$hs_county[pbr22$hs == "Reedley"] = 'Fresno'
+pbr22$hs_county[pbr22$hs == "Berkeley"] = 'Alameda'
+pbr22$hs_county[pbr22$hs == "Edison"] = 'Fresno'
+pbr22$hs_county[pbr22$hs == "Fountain Valley"] = 'Orange'
+pbr22$hs_county[pbr22$hs == "Pittsburg"] = 'Contra Costa'
+pbr22$hs_county[pbr22$hs == "Eureka"] = 'Humboldt'
+pbr22$hs_county[pbr22$hs == "Vista Del Lago"] = 'Sacramento'
+pbr22$hs_county[pbr22$hs == "Olympian"] = 'San Diego'
+pbr22$hs_county[pbr22$hs == "Rancho Bernardo"] = 'San Diego'
+pbr22$hs_county[pbr22$hs == "Buhach Colony"] = 'Merced'
+pbr22$hs_county[pbr22$hs == "Granite Hills"] = 'San Diego'
+pbr22$hs_county[pbr22$hs == "Rodriguez"] = 'Solano'
+pbr22$hs_county[pbr22$hs == "Pleasant Valley"] = 'Butte'
+pbr22$hs_county[pbr22$hs == "Serra"] = 'San Mateo'
+pbr22 = pbr22[-259,]
+pbr22 = pbr22[-304,]
+pbr22$hs_county[pbr22$hs == "Rancho Cucamonga"] = 'San Bernardino'
+pbr22$hs_county[pbr22$hs == "Chico"] = 'Butte'
+pbr22$hs_county[pbr22$hs == "Irvington"] = 'Alameda'
+pbr22$hs_county[pbr22$hs == "Clovis East"] = 'Fresno'
+pbr22[271, 2] = 'Woodside'
+pbr22$hs_county[pbr22$hs == "Woodside"] = 'San Mateo'
+pbr22$hs_county[pbr22$hs == "Sage Creek"] = 'San Diego'
+pbr22$hs_county[pbr22$hs == "Moreau Catholic"] = 'Alameda'
+pbr22$hs_county[pbr22$hs == "Alpha Charter (JMF)"] = 'Sacramento'
+pbr22$hs_county[pbr22$hs == "Warren"] = 'Los Angeles'
+pbr22$hs_county[pbr22$hs == "Dos Pueblos"] = 'Santa Barbara'
+pbr22$hs_county[pbr22$hs == "Campolindo"] = 'Contra Costa'
+pbr22$hs_county[pbr22$hs == "Branham"] = 'Santa Clara'
+pbr22$hs_county[pbr22$hs == "Crescenta Valley"] = 'Los Angeles'
+pbr22$hs_county[pbr22$hs == "Granada Hills"] = 'Los Angeles'
+pbr22$hs_county[pbr22$hs == "Upland"] = 'San Bernardino'
+pbr22$hs_county[pbr22$hs == "St. Mary's College Prep"] = 'Alameda'
+pbr22$hs_county[pbr22$hs == "Pitman"] = 'Stanislaus'
+pbr22$hs_county[pbr22$hs == "Clovis West"] = 'Fresno'
+pbr22$hs_county[pbr22$hs == "Oakland Tech"] = 'Alameda'
+pbr22$hs_county[pbr22$hs == "Canyon Springs"] = 'Riverside'
+pbr22$hs_county[pbr22$hs == "Murrieta Valley"] = 'Riverside'
+pbr22$hs_county[pbr22$hs == "Crespi"] = 'Los Angeles'
+pbr22$hs_county[pbr22$hs == "Chaminade"] = 'los angeles'
+pbr22$hs_county[pbr22$hs == "Bishop Alemany"] = 'los angeles'
+pbr22$hs_county[pbr22$hs == "Palma"] = 'monterey'
+pbr22$hs_county[pbr22$hs == "Live Oak"] = 'santa clara'
+
+
+pbr22 = pbr22[-21,]
+pbr22 = pbr22[-59,]
+pbr22 = pbr22[-93,]
+pbr22 = pbr22[-109,]
+pbr22 = pbr22[-210,]
+
+pbr22$hs_county = tolower(pbr22$hs_county)
+```
+
+```{r}
+pbr21 = read_excel('pbr21.xlsx')
+pbr21$class = rep(2021)
+colnames(pbr21)[3] = 'hs'
+pbr21 = clean_names(pbr21)
+pbr21 = pbr21[-1]
+
+pbr22_counties_match = pbr22[c(2, 5)]
+
+pbr21 = left_join(pbr21, pbr22_counties_match, by='hs')
+pbr21 = pbr21[!duplicated(pbr21),]
+
+pbr21$hs_county[pbr21$hs == "American Canyon"] = 'napa'
+pbr21$hs_county[pbr21$hs == "Beckman"] = 'orange'
+pbr21$hs_county[pbr21$hs == "Placer"] = 'placer'
+pbr21$hs_county[pbr21$hs == "Capistrano Valley Christian"] = 'orange'
+pbr21$hs_county[pbr21$hs == "Trabuco Hills"] = 'orange'
+pbr21$hs_county[pbr21$hs == "Martin Luther King"] = 'riverside'
+pbr21$hs_county[pbr21$hs == "Acalanes"] = 'contra costa'
+pbr21$hs_county[pbr21$hs == "Roseville"] = 'placer'
+pbr21$hs_county[pbr21$hs == "Big Valley Christian"] = 'stanislaus'
+pbr21$hs_county[pbr21$hs == "Canyon"] = 'orange'
+pbr21$hs_county[pbr21$hs == "Arroyo Grande"] = 'san luis obispo'
+pbr21$hs_county[pbr21$hs == "Dana Hills"] = 'orange'
+pbr21$hs_county[pbr21$hs == "Sultana"] = 'san bernardino'
+pbr21$hs_county[pbr21$hs == "Palm Desert"] = 'riverside'
+pbr21$hs_county[pbr21$hs == "El Cerrito"] = 'contra costa'
+pbr21$hs_county[pbr21$hs == "Casa Grande"] = 'sonoma'
+pbr21$hs_county[pbr21$hs == "Carmel"] = 'monterey'
+pbr21$hs_county[pbr21$hs == "Ponderosa"] = 'el dorado'
+pbr21$hs_county[pbr21$hs == "Heritage"] = 'contra costa'
+pbr21$hs_county[pbr21$hs == "Valley Christian"] = 'santa clara'
+pbr21$hs_county[pbr21$hs == "Los Gatos"] = 'santa clara'
+pbr21$hs_county[pbr21$hs == "Oaks Christian"] = 'los angeles'
+pbr21 = pbr21[-58,]
+pbr21$hs_county[pbr21$hs == "Crossroads"] = 'los angeles'
+pbr21$hs_county[pbr21$hs == "Tahquitz"] = 'riverside'
+pbr21$hs_county[pbr21$hs == "Vacaville"] = 'solano'
+pbr21$hs_county[pbr21$hs == "Piedmont"] = 'alameda'
+pbr21$hs_county[pbr21$hs == "Gregori"] = 'stanislaus'
+pbr21$hs_county[pbr21$hs == "Chino Hills"] = 'san bernardino'
+pbr21$hs_county[pbr21$hs == "Christian"] = 'san diego'
+pbr21$hs_county[pbr21$hs == "Franklin"] = 'sacramento'
+pbr21$hs_county[pbr21$hs == "Santana"] = 'san diego'
+pbr21$hs_county[pbr21$hs == "Bear River"] = 'nevada'
+pbr21$hs_county[pbr21$hs == "La Habra"] = 'orange'
+pbr21[96, 2] = 'Cajon'
+pbr21$hs_county[pbr21$hs == "Cajon"] = 'san bernardino'
+pbr21$hs_county[pbr21$hs == "San Dimas"] = 'los angeles'
+pbr21$hs_county[pbr21$hs == "Cardinal Newman"] = 'sonoma'
+pbr21$hs_county[pbr21$hs == "Bullard"] = 'fresno'
+pbr21$hs_county[pbr21$hs == "Chaminade"] = 'los angeles'
+pbr21$hs_county[pbr21$hs == "Los Alamitos"] = 'orange'
+pbr21 = pbr21[-108,]
+pbr21$hs_county[pbr21$hs == "Arcadia"] = 'los angeles'
+pbr21$hs_county[pbr21$hs == "Santiago"] = 'riverside'
+pbr21$hs_county[pbr21$hs == "Loyola"] = 'los angeles'
+pbr21 = pbr21[-115,]
+pbr21$hs_county[pbr21$hs == "Los Altos"] = 'santa clara'
+pbr21$hs_county[pbr21$hs == "Yorba Linda"] = 'orange'
+pbr21$hs_county[pbr21$hs == "Shadow Hills"] = 'riverside'
+pbr21$hs_county[pbr21$hs == "Cypress"] = 'orange'
+pbr21$hs_county[pbr21$hs == "Quartz Hill"] = 'los angeles'
+pbr21[139, 2] = 'Cathedral'
+pbr21$hs_county[pbr21$hs == "Cathedral"] = 'los angeles'
+pbr21$hs_county[pbr21$hs == "Westlake"] = 'ventura'
+pbr21$hs_county[pbr21$hs == "San Juan Hills"] = 'orange'
+pbr21$hs_county[pbr21$hs == "El Camino"] = 'san diego'
+pbr21$hs_county[pbr21$hs == "Mission Bay"] = 'san diego'
+pbr21$hs_county[pbr21$hs == "Valencia"] = 'los angeles'
+pbr21$hs_county[pbr21$hs == "Redlands East Valley"] = 'san bernardino'
+pbr21$hs_county[pbr21$hs == "Banning"] = 'los angeles'
+pbr21$hs_county[pbr21$hs == "Agoura"] = 'los angeles'
+pbr21$hs_county[pbr21$hs == "Granada"] = 'alameda'
+pbr21$hs_county[pbr21$hs == "Venice"] = 'los angeles'
+pbr21$hs_county[pbr21$hs == "Amador Valley"] = 'alameda'
+pbr21$hs_county[pbr21$hs == "Westview"] = 'san diego'
+pbr21$hs_county[pbr21$hs == "Pleasant Grove"] = 'sacramento'
+pbr21$hs_county[pbr21$hs == "Dublin"] = 'alameda'
+pbr21$hs_county[pbr21$hs == "Will C. Wood"] = 'solano'
+pbr21$hs_county[pbr21$hs == "The King's Academy"] = 'santa clara'
+pbr21$hs_county[pbr21$hs == "Vista Murrieta"] = 'riverside'
+pbr21$hs_county[pbr21$hs == "Adolfo Camarillo"] = 'ventura'
+pbr21$hs_county[pbr21$hs == "Cosumnes Oaks"] = 'sacramento'
+pbr21$hs_county[pbr21$hs == "Oak Hills"] = 'san bernardino'
+pbr21$hs_county[pbr21$hs == "Chaminade College Prep"] = 'los angeles'
+pbr21$hs_county[pbr21$hs == "Davis"] = 'yolo'
+pbr21$hs_county[pbr21$hs == "San Dieguito Academy"] = 'san diego'
+pbr21$hs_county[pbr21$hs == "Jserra Catholic"] = 'orange'
+pbr21$hs_county[pbr21$hs == "Norco"] = 'riverside'
+pbr21$hs_county[pbr21$hs == "Santa Fe"] = 'los angeles'
+pbr21$hs_county[pbr21$hs == "Whitney"] = 'los angeles'
+pbr21$hs_county[pbr21$hs == "Santa Margarita"] = 'orange'
+pbr21$hs_county[pbr21$hs == "Ocean View"] = 'orange'
+pbr21$hs_county[pbr21$hs == "Xavier College Prep"] = 'riverside'
+pbr21$hs_county[pbr21$hs == "Laguna Creek"] = 'sacramento'
+pbr21$hs_county[pbr21$hs == "El Camino Real Charter"] = 'los angeles'
+pbr21$hs_county[pbr21$hs == "University"] = 'san francisco'
+pbr21$hs_county[pbr21$hs == "Scotts Valley"] = 'santa cruz'
+pbr21$hs_county[pbr21$hs == "University City"] = 'san diego'
+pbr21$hs_county[pbr21$hs == "Summit"] = 'san bernardino'
+pbr21$hs_county[pbr21$hs == "Windsor"] = 'sonoma'
+```
+
+```{r}
+pbr20 = read_excel('pbr20.xlsx')
+pbr20$class = rep(2020)
+colnames(pbr20)[3] = 'hs'
+pbr20 = clean_names(pbr20)
+pbr20 = pbr20[-1]
+
+counties_match = rbind(pbr21, pbr22)
+counties_match = counties_match[c(2, 5)]
+counties_match = counties_match[!duplicated(counties_match),]
+
+pbr20 = left_join(pbr20, counties_match, by='hs')
+pbr20 = pbr20[!duplicated(pbr20),]
+
+pbr20$hs_county[pbr20$hs == "Oakmont"] = 'placer'
+pbr20$hs_county[pbr20$hs == "St. Joseph"] = 'santa barbara'
+pbr20$hs_county[pbr20$hs == "Grace Brethren"] = 'ventura'
+pbr20$hs_county[pbr20$hs == "Capital Christian"] = 'sacramento'
+pbr20$hs_county[pbr20$hs == "Lakewood"] = 'los angeles'
+pbr20$hs_county[pbr20$hs == "Valhalla"] = 'san diego'
+pbr20$hs_county[pbr20$hs == "El Toro"] = 'orange'
+pbr20$hs_county[pbr20$hs == 'Leland'] = 'santa clara'
+pbr20$hs_county[pbr20$hs == 'San Luis Obispo'] = 'san luis obispo'
+pbr20$hs_county[pbr20$hs == 'Hanford'] = 'kings'
+pbr20$hs_county[pbr20$hs == 'Chaminade Prep'] = 'los angeles'
+pbr20$hs_county[pbr20$hs == 'Laguna Beach'] = 'orange'
+pbr20$hs_county[pbr20$hs == 'Newbury Park'] = 'ventura'
+pbr20$hs_county[pbr20$hs == 'Clovis'] = 'fresno'
+pbr20$hs_county[pbr20$hs == 'Don Lugo'] = 'san bernardino'
+pbr20$hs_county[pbr20$hs == 'Bella Vista'] = 'sacramento'
+pbr20$hs_county[pbr20$hs == 'Bishop Mora Salesian'] = 'los angeles'
+pbr20$hs_county[pbr20$hs == 'Hilmar'] = 'merced'
+pbr20$hs_county[pbr20$hs == 'Lodi'] = 'san joaquin'
+pbr20$hs_county[pbr20$hs == 'Marina'] = 'orange'
+pbr20$hs_county[pbr20$hs == 'Aliso Niguel'] = 'orange'
+pbr20$hs_county[pbr20$hs == 'Cathederal Catholic'] = 'san diego'
+pbr20$hs_county[pbr20$hs == 'Righetti'] = 'santa barbara'
+pbr20$hs_county[pbr20$hs == 'Rancho Buena Vista'] = 'san diego'
+pbr20$hs_county[pbr20$hs == 'Oak Ridge'] = 'el dorado'
+pbr20$hs_county[pbr20$hs == 'El Dorado'] = 'orange'
+pbr20$hs_county[pbr20$hs == 'Harbor'] = 'santa cruz'
+pbr20$hs_county[pbr20$hs == 'Freedom'] = 'contra costa'
+pbr20$hs_county[pbr20$hs == 'Chaminade College Preparatory'] = 'los angeles'
+pbr20$hs_county[pbr20$hs == 'Saint Augustine'] = 'san diego'
+pbr20$hs_county[pbr20$hs == 'Flintridge Preparatory'] = 'los angeles'
+pbr20$hs_county[pbr20$hs == 'Atwater'] = 'merced'
+pbr20$hs_county[pbr20$hs == 'Washington'] = 'alameda'
+pbr20$hs_county[pbr20$hs == 'Kimball'] = 'san joaquin'
+pbr20$hs_county[pbr20$hs == 'Encinal'] = 'alameda'
+pbr20$hs_county[pbr20$hs == 'Mission Viejo'] = 'orange'
+pbr20$hs_county[pbr20$hs == 'Junipero Serra'] = 'san mateo'
+pbr20$hs_county[pbr20$hs == 'Central Catholic'] = 'stanislaus'
+pbr20$hs_county[pbr20$hs == 'Monterey'] = 'monterey'
+pbr20$hs_county[pbr20$hs == 'Cerritos'] = 'los angeles'
+pbr20$hs_county[pbr20$hs == 'Red Bluff'] = 'tehama'
+pbr20$hs_county[pbr20$hs == 'Marin Catholic'] = 'marin'
+pbr20$hs_county[pbr20$hs == 'Canyon Crest'] = 'san diego'
+pbr20[167, 2] = 'Orange'
+pbr20$hs_county[pbr20$hs == 'Orange'] = 'orange'
+pbr20$hs_county[pbr20$hs == 'Capo Valley'] = 'orange'
+pbr20$hs_county[pbr20$hs == 'Maranantha'] = 'los angeles'
+pbr20$hs_county[pbr20$hs == 'JSerra Catholic'] = 'orange'
+pbr20$hs_county[pbr20$hs == 'Arnold O. Beckman'] = 'orange'
+pbr20$hs_county[pbr20$hs == "St Mary's"] = 'san joaquin'
+pbr20$hs_county[pbr20$hs == "Monte Vista Christian"] = 'santa cruz'
+pbr20$hs_county[pbr20$hs == "Ruben Ayala"] = 'san bernardino'
+pbr20$hs_county[pbr20$hs == "Redlands"] = 'san bernardino'
+pbr20$hs_county[pbr20$hs == "Benicia"] = 'solano'
+pbr20 = pbr20[-126,]
+```
+
+```{r}
+pbr19 = read_excel('pbr19.xlsx')
+pbr19$class = rep(2019)
+colnames(pbr19)[3] = 'hs'
+pbr19 = clean_names(pbr19)
+pbr19 = pbr19[-1]
+
+counties_match = do.call('rbind', list(pbr20, pbr21, pbr22))
+counties_match = counties_match[c(2, 5)]
+counties_match = counties_match[!duplicated(counties_match),]
+
+pbr19 = left_join(pbr19, counties_match, by='hs')
+pbr19 = pbr19[!duplicated(pbr19),]
+
+pbr19$hs_county[pbr19$hs == "La Costa Canyon"] = 'san diego'
+pbr19$hs_county[pbr19$hs == "Santa Cruz"] = 'santa cruz'
+pbr19$hs_county[pbr19$hs == "Ramona"] = 'san diego'
+pbr19$hs_county[pbr19$hs == "Ruben S. Ayala"] = 'san bernardino'
+pbr19$hs_county[pbr19$hs == "Paraclete"] = 'los angeles'
+pbr19$hs_county[pbr19$hs == "Argonaut"] = 'amador'
+pbr19$hs_county[pbr19$hs == "Simi Valley"] = 'ventura'
+pbr19$hs_county[pbr19$hs == "Tesoro"] = 'orange'
+pbr19$hs_county[pbr19$hs == "Woodland"] = 'yolo'
+pbr19$hs_county[pbr19$hs == "Sonora"] = 'orange'
+pbr19$hs_county[pbr19$hs == "Salinas"] = 'monterey'
+pbr19$hs_county[pbr19$hs == "St. Bonaventure"] = 'ventura'
+pbr19$hs_county[pbr19$hs == "Roosevelt"] = 'riverside'
+pbr19$hs_county[pbr19$hs == "Woodcrest Christian"] = 'riverside'
+pbr19$hs_county[pbr19$hs == "Monte Vista"] = 'contra costa'
+pbr19$hs_county[pbr19$hs == "Oakland Technical"] = 'alameda'
+pbr19$hs_county[pbr19$hs == "Windward"] = 'los angeles'
+pbr19$hs_county[pbr19$hs == "San Clemente"] = 'orange'
+pbr19$hs_county[pbr19$hs == "Richard Gahr"] = 'los angeles'
+pbr19[90, 2] = 'Harvard-Westlake'
+pbr19$hs_county[pbr19$hs == "Harvard-Westlake"] = 'los angeles'
+pbr19$hs_county[pbr19$hs == "El Camino Real"] = 'los angeles'
+pbr19$hs_county[pbr19$hs == "Sacred Heart Preparatory"] = 'san mateo'
+pbr19$hs_county[pbr19$hs == "John F Kennedy"] = 'alameda'
+pbr19$hs_county[pbr19$hs == "Carson"] = 'los angeles'
+pbr19$hs_county[pbr19$hs == "Serra Gardena"] = 'los angeles'
+pbr19$hs_county[pbr19$hs == "Alemany"] = 'los angeles'
+pbr19$hs_county[pbr19$hs == "Village Christian"] = 'los angeles'
+pbr19$hs_county[pbr19$hs == "La Canada"] = 'los angeles'
+pbr19$hs_county[pbr19$hs == "Northgate"] = 'contra costa'
+pbr19$hs_county[pbr19$hs == "Saugus"] = 'los angeles'
+pbr19$hs_county[pbr19$hs == "J W North"] = 'riverside'
+pbr19$hs_county[pbr19$hs == "Mission Prep"] = 'san luis obispo'
+pbr19$hs_county[pbr19$hs == "Branson"] = 'marin'
+pbr19$hs_county[pbr19$hs == "Martin Luther king"] = 'riverside'
+pbr19$hs_county[pbr19$hs == "junipero serra"] = 'san mateo'
+pbr19$hs_county[pbr19$hs == "Chaparral"] = 'san diego'
+pbr19$hs_county[pbr19$hs == "Sanger"] = 'fresno'
+pbr19$hs_county[pbr19$hs == "Castle Park"] = 'san diego'
+pbr19$hs_county[pbr19$hs == "Oxnard"] = 'ventura'
+pbr19$hs_county[pbr19$hs == "Christopher"] = 'santa clara'
+pbr19$hs_county[pbr19$hs == "Claremont"] = 'los angeles'
+pbr19$hs_county[pbr19$hs == "El Segundo"] = 'los angeles'
+pbr19$hs_county[pbr19$hs == "Vacaville Christian Schools"] = 'solano'
+pbr19$hs_county[pbr19$hs == "Cantwell Sacred Heart of Mary"] = 'los angeles'
+pbr19$hs_county[pbr19$hs == "Modesto"] = 'stanislaus'
+pbr19$hs_county[pbr19$hs == "Leigh"] = 'santa clara'
+pbr19$hs_county[pbr19$hs == "Miramonte"] = 'contra costa'
+pbr19$hs_county[pbr19$hs == "Sierra Pacific"] = 'kings'
+pbr19$hs_county[pbr19$hs == "Riverside Poly"] = 'riverside'
+pbr19 = pbr19[-88,]
+```
+
+```{r}
+counties = map_data('county')
+ca_counties <- subset(counties, region == "california")
+
+ca_base <- ggplot(data = ca_counties, mapping = aes(x = long, y = lat, 
+                group = group)) + 
+                coord_fixed(1.3) + 
+                geom_polygon(color = "black", fill = "gray") + ggtitle("PBR California Top Recruits 2019-2022")
+```
+
+```{r}
+all_recruits = do.call('rbind', list(pbr19, pbr20, pbr21, pbr22))
+all_recruits_counties = as.data.frame(table(all_recruits$hs_county))
+all_recruits_counties = inner_join(ca_counties, all_recruits_counties, by=c('subregion'='Var1'))
+```
+
+```{r}
+ditch_the_axes <- theme(
+  axis.text = element_blank(),
+  axis.line = element_blank(),
+  axis.ticks = element_blank(),
+  panel.border = element_blank(),
+  panel.grid = element_blank(),
+  axis.title = element_blank()
+  )
+
+cnames <- all_recruits_counties %>% 
+  group_by(subregion) %>% 
+  summarise(long=mean(long), lat=mean(lat))
+
+map <- ca_base + 
+      geom_polygon(data = all_recruits_counties, aes(fill = Freq)) +
+      geom_polygon(color = "white", fill = NA) +
+      theme_bw() +
+      ditch_the_axes 
+#      + geom_text_repel(data=cnames, aes(x=long, y=lat, label=subregion), group=cnames$subregion, color='red', size=4, 
+#                      min.segment.length=unit(0, 'lines'))
+map
+```
+
+```{r}
+x = all_recruits_counties[!duplicated(all_recruits_counties[,c('subregion','Freq')]),]
+x
+```
+
+```{r}
+y = as.data.frame(table(all_recruits$hs_county, all_recruits$pos))
+z = as.data.frame(table(all_recruits$hs_county, all_recruits$hs))
+```
+
